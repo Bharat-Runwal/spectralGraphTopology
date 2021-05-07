@@ -13,8 +13,8 @@ w_init <- function(w0, Sinv) {
 }
 
 
-laplacian.w_update <- function(w, Lw, U, beta, lambda, K) {
-  c <- Lstar(crossprod(sqrt(lambda) * t(U)) - K / beta)
+laplacian.w_update <- function(Ln,w, Lw, U, beta, lambda, K) {
+  c <- Lstar(crossprod(sqrt(lambda) * t(U)) + Ln / beta)
   grad_f <- Lstar(Lw) - c
   M_grad_f <- Lstar(L(grad_f))
   wT_M_grad_f <- sum(w * M_grad_f)
@@ -80,7 +80,7 @@ laplacian.lambda_update <- function(lb, ub, beta, U, Lw, k) {
   q <- ncol(Lw) - k
   d <- diag(t(U) %*% Lw %*% U)
   # unconstrained solution as initial point
-  lambda <- .5 * (d + sqrt(d^2 + 4 / beta))
+  lambda <- d
   eps <- 1e-9
   condition <- c((lambda[q] - ub) <= eps,
                  (lambda[1] - lb) >= -eps,
