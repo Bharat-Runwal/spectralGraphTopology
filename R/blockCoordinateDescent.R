@@ -1,3 +1,4 @@
+#' @export
 w_init <- function(w0, Sinv) {
   if (is.character(w0)) {
     if (w0 == "qp") {
@@ -12,7 +13,7 @@ w_init <- function(w0, Sinv) {
   return(w0)
 }
 
-
+#' @export
 laplacian.w_update <- function(Ln,w, Lw, U, beta, lambda, K) {
   c <- Lstar(crossprod(sqrt(lambda) * t(U)) + Ln / beta)
   grad_f <- Lstar(Lw) - c
@@ -76,12 +77,13 @@ joint.V_update <- function(...) {
 }
 
 
+#' @export
 laplacian.lambda_update <- function(lb, ub, beta, U, Lw, k) {
   q <- ncol(Lw) - k
   d <- diag(t(U) %*% Lw %*% U)
   # unconstrained solution as initial point
   lambda <- d
-  eps <- 1e-9
+  eps <- 1e-5
   condition <- c((lambda[q] - ub) <= eps,
                  (lambda[1] - lb) >= -eps,
                  (lambda[2:q] - lambda[1:(q-1)]) >= -eps)
