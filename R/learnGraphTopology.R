@@ -163,7 +163,7 @@ learn_k_component_graph <- function(S, is_data_matrix = FALSE, k = 1, w0 = "naiv
   }
   # compute the adjancency matrix
   Aw <- A(w)
-  results <- list(laplacian = Lw, adjacency = Aw, w = w, lambda = lambda, U = U,
+  results <- list(laplacian = Lw, adjacency = Aw, w = w, lambda = lambda, U = U0,
                   elapsed_time = time_seq, convergence = has_w_converged,
                   beta_seq = beta_seq)
   if (record_objective) {
