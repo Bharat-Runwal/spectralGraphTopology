@@ -70,29 +70,36 @@ learn_k_component_graph <- function(S, is_data_matrix = FALSE, k = 1, w0 = "naiv
                                     beta = 1e4, beta_max = 1e6, fix_beta = TRUE, rho = 1e-2, m = 7, eps = 1e-4,
                                     maxiter = 1e4, abstol = 1e-6, reltol = 1e-4, eigtol = 1e-9,
                                     record_objective = FALSE, record_weights = FALSE, verbose = TRUE) {
-  if (is_data_matrix || ncol(S) != nrow(S)) {
-    A <- build_initial_graph(S, m = m)
-    D <- diag(.5 * colSums(A + t(A)))
-    L <- D - .5 * (A + t(A))
-    S <- MASS::ginv(L)
-    is_data_matrix <- TRUE
-  }
+  # if (is_data_matrix || ncol(S) != nrow(S)) {
+  #   A <- build_initial_graph(S, m = m)
+  #   D <- diag(.5 * colSums(A + t(A)))
+  #   L <- D - .5 * (A + t(A))
+  #   S <- MASS::ginv(L)
+  #   is_data_matrix <- TRUE
+  # }
   # number of nodes
   n <- nrow(S)
   # find an appropriate inital guess
-  if (is_data_matrix)
-    Sinv <- L
-  else
-    Sinv <- MASS::ginv(S)
+  # if (is_data_matrix)
+  #   Sinv <- L
+  # else
+  D <- diag(.5 * colSums(S + t(S)))
+  L <- D - .5 * (S + t(S))
+  # Sinv <- MASS::ginv(L)
+ 
   # if w0 is either "naive" or "qp", compute it, else return w0
-  w0 <- w_init(w0, Sinv)
+  w0 <- w_init(w0, L)
+  # print(w0)
   # compute quantities on the initial guess
+# graph$Adjacency
   Lw0 <- L(w0)
+ 
   # l1-norm penalty factor
   # H <- alpha * (2 * diag(n) - matrix(1, n, n))
-  H <- alpha * (diag(n) - matrix(1, n, n))
-  K <- S + H
-  U0 <- laplacian.U_update(Lw = Lw0, k = k)
+  # H <- alpha * (diag(n) - matrix(1, n, n))
+  # K <- S + H
+  # U0 <- laplacian.U_update(Lw = Lw0, k = k)
+  U0 <- eigen(L)$vectors
   lambda0 <- laplacian.lambda_update(lb = lb, ub = ub, beta = beta, U = U0,
                                      Lw = Lw0, k = k)
   # save objective function value at initial guess
@@ -111,16 +118,16 @@ learn_k_component_graph <- function(S, is_data_matrix = FALSE, k = 1, w0 = "naiv
                                      total = maxiter, clear = FALSE, width = 120)
   start_time <- proc.time()[3]
   for (i in 1:maxiter) {
-    w <- laplacian.w_update(w = w0, Lw = Lw0, U = U0, beta = beta,
-                            lambda = lambda0, K = K)
+    w <- laplacian.w_update(Ln=L, w = w0, Lw = Lw0, U = U0, beta = beta,
+                            lambda = lambda0)
     Lw <- L(w)
-    U <- laplacian.U_update(Lw = Lw, k = k)
-    lambda <- laplacian.lambda_update(lb = lb, ub = ub, beta = beta, U = U,
+    # U <- laplacian.U_update(Lw = Lw, k = k)
+    lambda <- laplacian.lambda_update(lb = lb, ub = ub, beta = beta, U = U0,
                                       Lw = Lw, k = k)
     # compute negloglikelihood and objective function values
     if (record_objective) {
       ll <- laplacian.negloglikelihood(Lw = Lw, lambda = lambda, K = K)
-      fun <- ll + laplacian.prior(beta = beta, Lw = Lw, lambda = lambda, U = U)
+      fun <- ll + laplacian.prior(beta = beta, Lw = Lw, lambda = lambda, U = U0)
       ll_seq <- c(ll_seq, ll)
       fun_seq <- c(fun_seq, fun)
     }
@@ -149,10 +156,10 @@ learn_k_component_graph <- function(S, is_data_matrix = FALSE, k = 1, w0 = "naiv
       break
     # update estimates
     w0 <- w
-    U0 <- U
+    # U0 <- U
     lambda0 <- lambda
     Lw0 <- Lw
-    K <- S + H / (-Lw + eps)
+    # K <- S + H / (-Lw + eps)
   }
   # compute the adjancency matrix
   Aw <- A(w)
@@ -165,6 +172,7 @@ learn_k_component_graph <- function(S, is_data_matrix = FALSE, k = 1, w0 = "naiv
   }
   if (record_weights)
     results$w_seq <- w_seq
+  print(Lw0)
   return(results)
 }
 
